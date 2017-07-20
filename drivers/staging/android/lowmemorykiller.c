@@ -87,9 +87,9 @@ static unsigned long lowmem_count(struct shrinker *s,
 }
 
 #ifdef CONFIG_ANDROID_LMK_ADJ_RBTREE
-static struct task_struct *pick_next_from_adj_tree(struct task_struct *task);
-static struct task_struct *pick_first_task(void);
-static struct task_struct *pick_last_task(void);
+static inline struct task_struct *pick_next_from_adj_tree(struct task_struct *task);
+static inline struct task_struct *pick_first_task(void);
+static inline struct task_struct *pick_last_task(void);
 #endif
 
 static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
@@ -104,7 +104,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 	int selected_tasksize = 0;
 	short selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
-	int other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
+	int other_free = global_node_page_state(NR_FREE_PAGES) - totalreserve_pages;
 	int other_file = global_node_page_state(NR_FILE_PAGES) -
 				global_node_page_state(NR_SHMEM) -
 				global_node_page_state(NR_UNEVICTABLE) -
