@@ -62,14 +62,14 @@ __setup("hlt", cpu_idle_nopoll_setup);
 static noinline int __cpuidle cpu_idle_poll(void)
 {
 	rcu_idle_enter();
-	trace_cpu_idle_rcuidle(0, smp_processor_id());
+	trace_cpu_idle_rcuidle(0, cpu);
 	local_irq_enable();
 	stop_critical_timings();
 	while (!tif_need_resched() &&
 		(cpu_idle_force_poll || tick_check_broadcast_expired()))
 		cpu_relax();
 	start_critical_timings();
-	trace_cpu_idle_rcuidle(PWR_EVENT_EXIT, smp_processor_id());
+	trace_cpu_idle_rcuidle(PWR_EVENT_EXIT, cpu);
 	rcu_idle_exit();
 	return 1;
 }
@@ -229,6 +229,8 @@ exit_idle:
  */
 static void do_idle(void)
 {
+	int cpu = smp_processor_id();
+
 	/*
 	 * If the arch has a polling bit, we maintain an invariant:
 	 *
@@ -246,7 +248,7 @@ static void do_idle(void)
 		check_pgt_cache();
 		rmb();
 
-		if (cpu_is_offline(smp_processor_id())) {
+		if (cpu_is_offline(cpu)) {
 			tick_nohz_idle_stop_tick_protected();
 			cpuhp_report_idle_dead();
 			arch_cpu_idle_dead();
