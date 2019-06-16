@@ -316,9 +316,7 @@ static ssize_t ashmem_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	 * be destroyed until all references to the file are dropped and
 	 * ashmem_release is called.
 	 */
-	mutex_unlock(&ashmem_mutex);
 	ret = vfs_iter_read(asma->file, iter, &iocb->ki_pos, 0);
-	mutex_lock(&ashmem_mutex);
 	if (ret > 0)
 		asma->file->f_pos = iocb->ki_pos;
 out_unlock:
