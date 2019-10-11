@@ -48,7 +48,6 @@ EXPORT_SYMBOL(g_lcd_id);
 extern int lct_nvt_tp_info_node_init(void);
 
 static void tp_fb_notifier_resume_work(struct kthread_work *work);
-
 #if NVT_TOUCH_ESD_PROTECT
 static struct kthread_delayed_work nvt_esd_check_work;
 static struct kthread_worker nvt_worker;
@@ -68,6 +67,7 @@ extern int32_t nvt_mp_proc_init(void);
 #endif
 
 struct nvt_ts_data *ts;
+struct kmem_cache *kmem_ts_data_pool;
 
 #if BOOT_UPDATE_FIRMWARE
 extern void Boot_Update_Firmware(struct kthread_work *work);
@@ -596,7 +596,7 @@ static int32_t nvt_flash_close(struct inode *inode, struct file *file)
 	struct nvt_flash_data *dev = file->private_data;
 
 	if (dev)
-		kfree(dev);
+		kmem_cache_free(kmem_ts_data_pool, dev);
 
 	return 0;
 }
@@ -1211,7 +1211,7 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 
 	NVT_LOG("start\n");
 
-	ts = kmalloc(sizeof(struct nvt_ts_data), GFP_KERNEL);
+	ts = kmem_cache_zalloc(kmem_ts_data_pool, GFP_KERNEL);
 	if (ts == NULL) {
 		NVT_ERR("failed to allocated memory for nvt ts data\n");
 		return -ENOMEM;
@@ -1478,7 +1478,7 @@ err_check_functionality_failed:
 	gpio_free(ts->irq_gpio);
 err_gpio_config_failed:
 	i2c_set_clientdata(client, NULL);
-	kfree(ts);
+	kmem_cache_free(kmem_ts_data_pool, ts);
 	return ret;
 }
 
@@ -1509,7 +1509,7 @@ static int32_t nvt_ts_remove(struct i2c_client *client)
 	free_irq(client->irq, ts);
 	input_unregister_device(ts->input_dev);
 	i2c_set_clientdata(client, NULL);
-	kfree(ts);
+	kmem_cache_free(kmem_ts_data_pool, ts);
 
 	return 0;
 }
@@ -1862,6 +1862,12 @@ static int32_t __init nvt_driver_init(void)
 	int32_t ret = 0;
 
 	NVT_LOG("start\n");
+
+	kmem_ts_data_pool = KMEM_CACHE(nvt_ts_data, SLAB_HWCACHE_ALIGN | SLAB_PANIC);
+	if (!kmem_ts_data_pool) {
+		return -ENOMEM;
+	}
+
 	if (IS_ERR_OR_NULL(g_lcd_id)){
 		NVT_ERR("g_lcd_id is ERROR!\n");
 		goto err_lcd;
@@ -1900,8 +1906,9 @@ return:
 static void __exit nvt_driver_exit(void)
 {
 	i2c_del_driver(&nvt_i2c_driver);
+	kmem_cache_destroy(kmem_ts_data_pool);
+	kthread_flush_worker(&nvt_worker);
 
-		kthread_flush_worker(&nvt_worker);
 
 #if BOOT_UPDATE_FIRMWARE
 		kthread_flush_worker(&nvt_worker);
