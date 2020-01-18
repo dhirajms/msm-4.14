@@ -46,6 +46,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
+// tedlin@ASTI 2019/06/12 add for CONFIG_HOUSTON
+#include <linux/houston/houston_helper.h>
+
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 #if defined(CONFIG_SCHED_DEBUG) && defined(HAVE_JUMP_LABEL)
@@ -3594,6 +3597,9 @@ static void __sched notrace __schedule(bool preempt)
 		++*switch_count;
 
 		trace_sched_switch(preempt, prev, next);
+
+// tedlin@ASTI 2019/06/12 add for CONFIG_HOUSTON
+		ht_sched_switch_update(prev, next);
 
 		/* Also unlocks the rq: */
 		rq = context_switch(rq, prev, next, &rf);
