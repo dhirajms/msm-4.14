@@ -101,6 +101,8 @@
 
 #include <trace/events/sched.h>
 
+#include <linux/cpu_input_boost.h>
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
 
@@ -2073,6 +2075,10 @@ long _do_fork(unsigned long clone_flags,
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
+	
+	/* Kick power clusters on fork */
+	if (is_zygote_pid(current->pid))
+		cpu_input_boost_kick_lil_max(300);
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
