@@ -12,6 +12,7 @@
 #include <linux/kthread.h>
 #include <linux/version.h>
 #include <linux/slab.h>
+#include <linux/sched/sysctl.h>
 
 /* The sched_param struct is located elsewhere in newer kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
@@ -235,6 +236,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 
 	/* Boost Little Clusters to max freuency for max boost */
 	if (test_bit(MAX_BOOST_LIL, &b->state)) {
+		sysctl_sched_energy_aware = 0;
 		if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
 				policy->min = get_max_boost_freq(policy);
 		return NOTIFY_OK;
@@ -250,6 +252,8 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 		policy->min = CONFIG_MIN_FREQ_LP;
 	else
 		policy->min = CONFIG_MIN_FREQ_PERF;
+
+	sysctl_sched_energy_aware = 1;
 
 	return NOTIFY_OK;
 }
