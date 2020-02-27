@@ -21,7 +21,8 @@
 enum {
 	SCREEN_OFF,
 	INPUT_BOOST,
-	MAX_BOOST
+	MAX_BOOST,
+	MAX_BOOST_LIL
 };
 
 struct boost_drv {
@@ -125,11 +126,43 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 		wake_up(&b->boost_waitq);
 }
 
+static void __cpu_input_boost_kick_lil_max(struct boost_drv *b,
+						unsigned int duration_ms)
+{
+	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned long curr_expires, new_expires;
+
+	if (test_bit(SCREEN_OFF, &b->state))
+		return;
+
+	do {
+		curr_expires = atomic_long_read(&b->max_boost_expires);
+		new_expires = jiffies + boost_jiffies;
+
+		/* Skip this boost if there's a longer boost in effect */
+		if (time_after(curr_expires, new_expires))
+			return;
+	} while (atomic_long_cmpxchg(&b->max_boost_expires, curr_expires,
+				     new_expires) != curr_expires);
+
+	set_bit(MAX_BOOST_LIL, &b->state);
+	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
+			      boost_jiffies))
+		wake_up(&b->boost_waitq);
+}
+
 void cpu_input_boost_kick_max(unsigned int duration_ms)
 {
 	struct boost_drv *b = &boost_drv_g;
 
 	__cpu_input_boost_kick_max(b, duration_ms);
+}
+
+void cpu_input_boost_kick_lil_max(unsigned int duration_ms)
+{
+	struct boost_drv *b = &boost_drv_g;
+
+	__cpu_input_boost_kick_lil_max(b, duration_ms);
 }
 
 static void input_unboost_worker(struct work_struct *work)
@@ -147,6 +180,7 @@ static void max_unboost_worker(struct work_struct *work)
 					   typeof(*b), max_unboost);
 
 	clear_bit(MAX_BOOST, &b->state);
+	clear_bit(MAX_BOOST_LIL, &b->state);
 	wake_up(&b->boost_waitq);
 }
 
@@ -196,6 +230,13 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 	/* Boost CPU to max frequency for max boost */
 	if (test_bit(MAX_BOOST, &b->state)) {
 		policy->min = get_max_boost_freq(policy);
+		return NOTIFY_OK;
+	}
+
+	/* Boost Little Clusters to max freuency for max boost */
+	if (test_bit(MAX_BOOST_LIL, &b->state)) {
+		if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
+				policy->min = get_max_boost_freq(policy);
 		return NOTIFY_OK;
 	}
 
