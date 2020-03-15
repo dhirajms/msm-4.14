@@ -297,7 +297,7 @@ static inline u64 ddr_find_target(u64 target) {
 		200, 300, 451, 547, 681, 768, 1017, 1353, 1555, 1804, 2092
 	};
 
-	return;
+	return 0;
 
 	for (i = 10; i >= 0; --i) {
 		if (target >= ddr_options[i]) {
