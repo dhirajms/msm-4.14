@@ -176,24 +176,24 @@ static bool ht_brain_active = true;
 module_param_named(brain_active, ht_brain_active, bool, 0664);
 
 /* fps boost switch */
-static bool fps_boost_enable = true;
+static bool fps_boost_enable = false;
 module_param_named(fps_boost_enable, fps_boost_enable, bool, 0664);
 
 /* freq hispeed */
 static bool cpufreq_hispeed_enable = false;
 module_param_named(cpufreq_hispeed_enable, cpufreq_hispeed_enable, bool, 0664);
 
-static unsigned int cpufreq_hispeed[HT_CLUSTERS] = { 1209600, 1612800, 1612800 };
+static unsigned int cpufreq_hispeed[HT_CLUSTERS] = { 0, 0, 0 };
 module_param_array_named(cpufreq_hispeed, cpufreq_hispeed, uint, NULL, 0664);
 
-static bool ddrfreq_hispeed_enable = true;
+static bool ddrfreq_hispeed_enable = false;
 module_param_named(ddrfreq_hispeed_enable, ddrfreq_hispeed_enable, bool, 0664);
 
-static unsigned int ddrfreq_hispeed = 1017;
+static unsigned int ddrfreq_hispeed = 2597;
 module_param_named(ddrfreq_hispeed, ddrfreq_hispeed, uint, 0664);
 
 /* choose boost freq to lock or lower bound */
-static unsigned int fps_boost_type = 1;
+static unsigned int fps_boost_type = 0;
 module_param_named(fps_boost_type, fps_boost_type, uint, 0664);
 
 /* filter out too close boost hint */
@@ -276,9 +276,8 @@ static struct cdev cdev;
 static inline int cpu_to_clus(int cpu)
 {
 	switch (cpu) {
-	case 0: case 1: case 2: case 3: return 0;
-	case 4: case 5: case 6: return 1;
-	case 7: return 2;
+	case 0: case 1: case 2: case 3: case 4: case 5: return 0;
+	case 6: case 7: return 1;
 	}
 	return 0;
 }
@@ -288,7 +287,6 @@ static inline int clus_to_cpu(int clus)
 	switch (clus) {
 	case 0: return CLUS_0_IDX;
 	case 1: return CLUS_1_IDX;
-	case 2: return CLUS_2_IDX;
 	}
 	return CLUS_0_IDX;
 }
@@ -298,6 +296,8 @@ static inline u64 ddr_find_target(u64 target) {
 	u64 ddr_options[11] = {
 		200, 300, 451, 547, 681, 768, 1017, 1353, 1555, 1804, 2092
 	};
+
+	return;
 
 	for (i = 10; i >= 0; --i) {
 		if (target >= ddr_options[i]) {
@@ -370,6 +370,8 @@ static inline const char* ht_ioctl_str(unsigned int cmd)
 static inline int ht_get_temp(int monitor_idx)
 {
 	int temp = 0;
+
+	return 0;
 
 	if (unlikely(!monitor.tzd[monitor_idx]))
 		return 0;
@@ -1031,6 +1033,8 @@ static int ht_fps_boost_store(const char *buf, const struct kernel_param *kp)
 	int ret;
 	u64 now;
 
+	return 0;
+
 	if (!fps_boost_enable)
 		return 0;
 
@@ -1179,6 +1183,8 @@ static int ht_fps_data_sync_store(const char *buf, const struct kernel_param *kp
 	static int cur_idx = 0;
 	//size_t len;
 	int i = 0, ret;
+
+	return 0;
 
 	if (strlen(buf) >= FPS_DATA_BUF_SIZE)
 		return 0;
@@ -1758,6 +1764,8 @@ static int fps_sync_init(void)
 	int rc;
 	struct device *class_dev;
 
+	return 0;
+
 	rc = alloc_chrdev_region(&ht_ctl_dev, 0, 1, HT_CTL_NODE);
 	if (rc < 0) {
 		ht_loge("alloc_chrdev_region failed %d\n", rc);
@@ -2058,6 +2066,7 @@ static int get_util(bool isRender, int *num)
 static int ht_init(void)
 {
 	int i;
+	return 0;
 
 	/* init cached fps info */
 	atomic_set(&cached_fps[0], 60);
