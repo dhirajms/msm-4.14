@@ -481,6 +481,14 @@ static struct proc_dir_entry *NVT_proc_entry;
 
 /*******************************************************
 Description:
+	Novatek touchscreen Adaptation to OXygenOS implementation
+********************************************************/
+static struct proc_dir_entry *NVT_oos_proc_entry = NULL;
+static struct proc_dir_entry *NVT_oos_proc_entry_tmp = NULL;
+#define DIR_NAME "touchpanel"
+
+/*******************************************************
+Description:
 	Novatek touchscreen /proc/NVTflash read function.
 
 return:
@@ -627,6 +635,25 @@ static int32_t nvt_flash_proc_init(void)
 	NVT_LOG("============================================================\n");
 	NVT_LOG("Create /proc/NVTflash\n");
 	NVT_LOG("============================================================\n");
+
+	NVT_oos_proc_entry = proc_mkdir(DIR_NAME, NULL);
+	if (NVT_oos_proc_entry == NULL) {
+		NVT_ERR("OOS: OOS_proc: Failed to create touchpanel entry!\n");
+		return -ENOMEM;
+	} else {
+		NVT_LOG("OOS: OOS_proc: Created touchpanel entry!\n");
+	}
+
+	NVT_oos_proc_entry_tmp = proc_create_data("gesture_enable", 0666, NVT_oos_proc_entry, 
+												&nvt_flash_fops, ts);
+	if (NVT_oos_proc_entry_tmp == NULL) {
+		NVT_ERR("OOS: OOS_proc_tmp: Failed to create /proc/touchpanel/gesture_enable entry!\n");
+		return -ENOMEM;
+	} else {
+		NVT_LOG("OOS: OOS_proc_tmp: Created /proc/touchpanel/gesture_enable entry!\n");
+	}
+
+	ts->NVT_oos_proc_entry = NVT_oos_proc_entry;
 
 	return 0;
 }
