@@ -42,6 +42,7 @@
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 #include "lct_tp_gesture.h"
 #include "lct_tp_grip_area.h"
+#include "op_proc.h"
 char g_lcd_id[128];
 EXPORT_SYMBOL(g_lcd_id);
 extern int lct_nvt_tp_info_node_init(void);
@@ -1898,7 +1899,9 @@ static void __exit nvt_driver_exit(void)
 }
 
 module_init(nvt_driver_init);
+module_init(proc_init);
 module_exit(nvt_driver_exit);
+module_exit(proc_cleanup);
 
 MODULE_DESCRIPTION("Novatek Touchscreen Driver");
 MODULE_LICENSE("GPL");
