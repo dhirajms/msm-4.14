@@ -80,6 +80,7 @@ char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 	"nnp_nosuid_transition"
 };
 
+int selinux_android_netlink_route;
 int selinux_policycap_netpeer;
 int selinux_policycap_openperm;
 int selinux_policycap_extsockclass;
@@ -91,7 +92,7 @@ static DEFINE_RWLOCK(policy_rwlock);
 
 static struct sidtab sidtab;
 struct policydb policydb;
-int ss_initialized __rticdata;
+int ss_initialized;
 
 /*
  * The largest sequence number that has been used when
@@ -2047,6 +2048,9 @@ static void security_load_policycaps(void)
 			pr_info("SELinux:  unknown policy capability %u\n",
 				i);
 	}
+
+	selinux_android_netlink_route = policydb.android_netlink_route;
+	selinux_nlmsg_init();
 }
 
 static int security_preserve_bools(struct policydb *p);
