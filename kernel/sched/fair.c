@@ -8351,7 +8351,7 @@ static int find_energy_efficient_cpu(struct sched_domain *sd,
 		fbt_env.need_idle = need_idle;
 		fbt_env.skip_cpu = is_many_wakeup(sibling_count_hint) ?
 				   cpu : -1;
-		fbt_env.strict_max = is_rtg &&
+		fbt_env.strict_max = task_in_related_thread_group(p) &&
 			(task_boost == TASK_BOOST_STRICT_MAX);
 
 		/* Find a cpu with sufficient capacity */
